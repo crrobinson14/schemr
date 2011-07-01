@@ -6,7 +6,63 @@ var WIDTH = 400;
 var HEIGHT = 300;
 var dragok = false;
 
-var tables = [];
+var ctypes = [];
+
+// Our layout needs are primitive for now. We expect the user to do some re-arranging, so for now we
+// just generally
+var spacing = 15;
+var last_x = 15;
+var last_y = 15;
+var row_height = 0;
+
+function addCtype(entry, i) {
+	var id = 'ctype-' + entry.type;
+	var html = '<div class="ctype" id="' + id + '" style="z-index: ' + (5+parseInt(i)) + '">';
+
+	html += '<h2>' + entry.label + '</h2>';
+	
+	for (i = 0; i < entry.groups.length; i++) {
+		html += '<div class="group group-' + (i % 6) + ' group-' + entry.groups[i].name + '">';
+		html += '<h3>' + entry.groups[i].label + '</h3>';
+		html += '<table cellpadding="0" cellspacing="0">';
+		for (j = 0; j < entry.groups[i].fields.length; j++) {
+			html += '<tr>';
+			html += '<td class="name">' + entry.groups[i].fields[j].machine_name + '</td>';
+			html += '<td class="multiple">' + (entry.groups[i].fields[j].multiple == 1 ? '&#8734;' : '') + '</td>';
+			html += '<td class="shared">' + (entry.groups[i].fields[j].shared == 1 ? '<a href="#" title="Shared by other types">&sect;</a>' : '') + '</td>';
+			html += '<td class="type">' + entry.groups[i].fields[j].type + '</td>';
+			html += '</tr>';
+		}
+		html += '</table></div>';
+	}
+	
+	html += '</div>';
+	
+	$('#scrollpane').append(html);
+	
+	var width = $('#' + id).width();
+	var height = $('#' + id).height();
+	
+	if (last_x + width >= $('#scrollpane').width()) {
+		last_y += row_height + spacing;
+		last_x = spacing;
+		row_height = 0;
+	}
+	
+	$('#' + id).css({left: last_x + 'px', top: last_y + 'px'});
+	last_x += width + spacing;
+}
+
+function getCtypes() {
+	$.getJSON(base_path + 'admin/content/types/schemr/ajax', { r: 'types' }, function(data) {
+		last_x = last_y = spacing;
+		row_height = 0;
+		for (var i in data) {
+			addCtype(data[i], i);
+			console.log(data[i]);
+		}
+	});
+}
 
 function drawCType(x,y,w,h) {
 	ctx.beginPath();
@@ -73,12 +129,8 @@ $(document).ready(function() {
 
 	WIDTH = window.innerWidth + 100;
 	HEIGHT = window.innerHeight-35 + 100; // Should be 30, but for some reason we get scrollbars until we expand a bit
-	
-	$.getJSON(base_path + 'admin/content/types/schemr/ajax', { r: 'types' }, function(data) {
-		for (var i in data) {
-			console.log(data[i]);
-		}
-	});
+
+	getCtypes();	
 	
 	redrawCanvas();
 

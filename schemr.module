@@ -218,7 +218,7 @@ function schemr_admin_configure(&$form_state, $module = NULL, $delta = 0) {
  * Utility function to create field classes with the appropriate entries. We cache fields
  * so we can track whether they're shared or not.
  */
-function schemr_ajax_generate_field($machine_name, $multiple, $type) {
+function schemr_ajax_generate_field($machine_name, $multiple, $type, $targets) {
 	static $fields = array();
 	
 	if (isset($fields[$machine_name])) {
@@ -230,7 +230,14 @@ function schemr_ajax_generate_field($machine_name, $multiple, $type) {
 	
 	$field->machine_name = $machine_name;
 	$field->multiple = $multiple;
-	$field->type = $type;
+	switch ($type) {
+		case 'userreference':
+			$field->type = 'ref: user';
+			break;
+		default:
+			$field->type = $type;
+			break;
+	}
 	$field->shared = 0;
 	
 	$fields[$machine_name] = $field;
