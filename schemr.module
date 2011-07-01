@@ -43,7 +43,42 @@ function schemr_menu() {
 function schemr_show_diagram() {
 	$ret = array();
 	
-	return implode("\n", $ret);
+	if (!function_exists('content_types') || !function_exists('content_fields'))
+		return "This module is not useful until you install CCK.";
+
+	$site_name = variable_get('site_name', '');
+	$path = base_path() . drupal_get_path('module', 'schemr');
+	$ret[] = <<<ENDL
+<!doctype html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<title>Schemr Content Type Diagram for "$site_name"</title>
+<link rel="stylesheet" type="text/css" href="$path/schemr.css" />
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>
+<script type="text/javascript" src="$path/schemr.js"></script>
+</head>
+<body>
+<header>
+	Schemr Content Type Diagram for &quot;$site_name&quot;
+</header>
+<section>
+	<div id="scrollpane"><canvas id="canvas" width="100" height="300">
+	This text is displayed if your browser does not support HTML5 Canvas.
+	</canvas></div>
+</section>
+</body>
+</html>
+ENDL;
+/*
+	$ctypes = content_types();
+	foreach ($ctypes as $ctype) {
+		$ret[] = $ctype['type'] . '<br />';
+	}
+	$ret[] = print_r($ctypes, TRUE);
+*/
+	print implode("\n", $ret);
+	die();
 }
 
 

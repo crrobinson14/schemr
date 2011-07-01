@@ -1,0 +1,4 @@
+html, body, header { margin: 0; padding: 0; }
+
+header { background: #00293e; color: #fff; font-weight: bold; height: 30px; line-height: 30px; padding: 0 14px; }
+#scrollpane { overflow: auto; }
