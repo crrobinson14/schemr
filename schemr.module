@@ -33,7 +33,13 @@ function schemr_menu() {
 		'type' => MENU_LOCAL_TASK,
 		'weight' => -49,
 	);
-
+	
+	$items['admin/content/types/schemr/ajax'] = array(
+		'page callback' => 'schemr_ajax_callback',
+		'access arguments' => array('administer content types'),
+		'type' => MENU_CALLBACK,
+	);
+	
 	return $items;	
 }
 
@@ -47,7 +53,8 @@ function schemr_show_diagram() {
 		return "This module is not useful until you install CCK.";
 
 	$site_name = variable_get('site_name', '');
-	$path = base_path() . drupal_get_path('module', 'schemr');
+	$bp = base_path();
+	$path = $bp . drupal_get_path('module', 'schemr');
 	$ret[] = <<<ENDL
 <!doctype html>
 <html>
@@ -57,6 +64,9 @@ function schemr_show_diagram() {
 <link rel="stylesheet" type="text/css" href="$path/schemr.css" />
 <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>
 <script type="text/javascript" src="$path/schemr.js"></script>
+<script type="text/javascript">
+var base_path = '$bp';
+</script>
 </head>
 <body>
 <header>
@@ -204,3 +214,90 @@ function schemr_admin_configure(&$form_state, $module = NULL, $delta = 0) {
   return $form;
 }
 
+/**
+ * Utility function to create field classes with the appropriate entries. We cache fields
+ * so we can track whether they're shared or not.
+ */
+function schemr_ajax_generate_field($machine_name, $multiple, $type) {
+	static $fields = array();
+	
+	if (isset($fields[$machine_name])) {
+		$fields[$machine_name]->shared = 1;
+		return $fields[$machine_name];
+	}
+	
+	$field = new stdClass();
+	
+	$field->machine_name = $machine_name;
+	$field->multiple = $multiple;
+	$field->type = $type;
+	$field->shared = 0;
+	
+	$fields[$machine_name] = $field;
+	
+	return $fields[$machine_name];
+}
+
+function schemr_ajax_generate_group($name, $label) {
+	$group = new stdClass();
+	
+	$group->name = $name;
+	$group->label = $label;
+	$group->fields = array();
+	
+	return $group;
+}
+
+/**
+ * Supplies the canvas display with data
+ */
+function schemr_ajax_callback() {
+	switch ($_REQUEST['r']) {
+		case 'types':
+			$results = array();
+			$fields = array();
+			
+			$ctypes = content_types();
+			foreach ($ctypes as $ctype) {
+				$groups = array('base' => schemr_ajax_generate_group('base', 'Base'));
+				
+				$field_groups = array();
+				$gs = fieldgroup_groups($ctype['type'], TRUE);
+				foreach ($gs as $g) {
+					foreach ($g['fields'] as $f) {
+						$field_groups[$f['field_name']] = $g['group_name'];
+					}
+					$groups[$g['group_name']] = schemr_ajax_generate_group($g['group_name'], $g['label']);
+				}
+				
+				
+				$result = new stdClass();
+				$result->type = $ctype['type'];
+				$result->label = $ctype['name'];				
+				
+				if ($ctype['has_title'])
+					$groups['base']->fields[] = schemr_ajax_generate_field('title', 0, 'text');
+				
+				if ($ctype['has_body'])
+					$groups['base']->fields[] = schemr_ajax_generate_field('body', 0, 'text');				
+
+				foreach ($ctype['fields'] as $f) {
+					$name = $f['field_name'];
+					$field = schemr_ajax_generate_field($name, $f['multiple'] == 0 ? 0 : 1, $f['type']);
+					if (!isset($field_groups[$name])) {
+						$groups['base']->fields[] = $field;
+					} else {
+						$groups[$field_groups[$name]]->fields[] = $field;
+					}
+				}
+
+				$result->groups = array_values($groups);
+				$results[] = $result;
+			}
+			
+			print json_encode($results);
+			break;
+	}
+	
+	die();
+}

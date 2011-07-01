@@ -74,6 +74,12 @@ $(document).ready(function() {
 	WIDTH = window.innerWidth + 100;
 	HEIGHT = window.innerHeight-35 + 100; // Should be 30, but for some reason we get scrollbars until we expand a bit
 	
+	$.getJSON(base_path + 'admin/content/types/schemr/ajax', { r: 'types' }, function(data) {
+		for (var i in data) {
+			console.log(data[i]);
+		}
+	});
+	
 	redrawCanvas();
 
 	canvas.onmousedown = myDown;
