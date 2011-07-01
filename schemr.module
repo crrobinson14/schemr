@@ -1,0 +1,171 @@
+<?php
+
+/**
+ *
+ */
+
+/**
+ * Implementation of hook_menu().
+ */
+function schemr_menu() {
+	$items = array();
+
+	$items['admin/content/types/schemr'] = array(
+		'title' => 'Schemr',
+		'page callback' => 'schemr_show_diagram',
+		'access arguments' => array('administer content types'),
+		'type' => MENU_LOCAL_TASK,
+	);
+	
+	$items['admin/content/types/schemr/view'] = array(
+		'title' => 'View Schema Diagram',
+		'page callback' => 'schemr_show_diagram',
+		'access arguments' => array('administer content types'),
+		'type' => MENU_LOCAL_TASK,
+		'weight' => -50,
+	);
+	
+	$items['admin/content/types/schemr/configure'] = array(
+		'title' => 'Configure Schemr',
+		'page callback' => 'drupal_get_form',
+		'page arguments' => array('schemr_admin_configure'),
+		'access arguments' => array('administer content types'),
+		'type' => MENU_LOCAL_TASK,
+		'weight' => -49,
+	);
+
+	return $items;	
+}
+
+/**
+ * Display a Schemr diagram
+ */
+function schemr_show_diagram() {
+	$ret = array();
+	
+	return implode("\n", $ret);
+}
+
+
+/**
+ * Display the Schemr configuration form.
+ */
+function schemr_admin_configure(&$form_state, $module = NULL, $delta = 0) {
+
+  $form['module'] = array('#type' => 'value', '#value' => $module);
+  $form['delta'] = array('#type' => 'value', '#value' => $delta);
+
+  $edit = db_fetch_array(db_query("SELECT pages, visibility, custom, title FROM {blocks} WHERE module = '%s' AND delta = '%s'", $module, $delta));
+
+  $form['block_settings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Block specific settings'),
+    '#collapsible' => TRUE,
+  );
+  $form['block_settings']['title'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Block title'),
+    '#maxlength' => 64,
+    '#description' => $module == 'block' ? t('The title of the block as shown to the user.') : t('Override the default title for the block. Use <em>&lt;none&gt;</em> to display no title, or leave blank to use the default block title.'),
+    '#default_value' => $edit['title'],
+    '#weight' => -18,
+  );
+
+
+  // Module-specific block configurations.
+  if ($settings = module_invoke($module, 'block', 'configure', $delta)) {
+    foreach ($settings as $k => $v) {
+      $form['block_settings'][$k] = $v;
+    }
+  }
+
+  // Get the block subject for the page title.
+  $info = module_invoke($module, 'block', 'list');
+  if (isset($info[$delta])) {
+    drupal_set_title(t("'%name' block", array('%name' => $info[$delta]['info'])));
+  }
+
+  // Standard block configurations.
+  $form['user_vis_settings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('User specific visibility settings'),
+    '#collapsible' => TRUE,
+  );
+  $form['user_vis_settings']['custom'] = array(
+    '#type' => 'radios',
+    '#title' => t('Custom visibility settings'),
+    '#options' => array(
+      t('Users cannot control whether or not they see this block.'),
+      t('Show this block by default, but let individual users hide it.'),
+      t('Hide this block by default but let individual users show it.')
+    ),
+    '#description' => t('Allow individual users to customize the visibility of this block in their account settings.'),
+    '#default_value' => $edit['custom'],
+  );
+
+  // Role-based visibility settings
+  $default_role_options = array();
+  $result = db_query("SELECT rid FROM {blocks_roles} WHERE module = '%s' AND delta = '%s'", $module, $delta);
+  while ($role = db_fetch_object($result)) {
+    $default_role_options[] = $role->rid;
+  }
+  $result = db_query('SELECT rid, name FROM {role} ORDER BY name');
+  $role_options = array();
+  while ($role = db_fetch_object($result)) {
+    $role_options[$role->rid] = $role->name;
+  }
+  $form['role_vis_settings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Role specific visibility settings'),
+    '#collapsible' => TRUE,
+  );
+  $form['role_vis_settings']['roles'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Show block for specific roles'),
+    '#default_value' => $default_role_options,
+    '#options' => $role_options,
+    '#description' => t('Show this block only for the selected role(s). If you select no roles, the block will be visible to all users.'),
+  );
+
+  $form['page_vis_settings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Page specific visibility settings'),
+    '#collapsible' => TRUE,
+  );
+  $access = user_access('use PHP for block visibility');
+
+  if ($edit['visibility'] == 2 && !$access) {
+    $form['page_vis_settings'] = array();
+    $form['page_vis_settings']['visibility'] = array('#type' => 'value', '#value' => 2);
+    $form['page_vis_settings']['pages'] = array('#type' => 'value', '#value' => $edit['pages']);
+  }
+  else {
+    $options = array(t('Show on every page except the listed pages.'), t('Show on only the listed pages.'));
+    $description = t("Enter one page per line as Drupal paths. The '*' character is a wildcard. Example paths are %blog for the blog page and %blog-wildcard for every personal blog. %front is the front page.", array('%blog' => 'blog', '%blog-wildcard' => 'blog/*', '%front' => '<front>'));
+
+    if ($access) {
+      $options[] = t('Show if the following PHP code returns <code>TRUE</code> (PHP-mode, experts only).');
+      $description .= ' '. t('If the PHP-mode is chosen, enter PHP code between %php. Note that executing incorrect PHP-code can break your Drupal site.', array('%php' => '<?php ?>'));
+    }
+    $form['page_vis_settings']['visibility'] = array(
+      '#type' => 'radios',
+      '#title' => t('Show block on specific pages'),
+      '#options' => $options,
+      '#default_value' => $edit['visibility'],
+    );
+    $form['page_vis_settings']['pages'] = array(
+      '#type' => 'textarea',
+      '#title' => t('Pages'),
+      '#default_value' => $edit['pages'],
+      '#description' => $description,
+    );
+  }
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save block'),
+  );
+
+  return $form;
+}
+
