@@ -21,20 +21,19 @@ function addCtype(entry, i) {
 
 	html += '<h2>' + entry.label + '</h2>';
 	
+	html += '<table cellpadding="0" cellspacing="0">';
 	for (i = 0; i < entry.groups.length; i++) {
-		html += '<div class="group group-' + (i % 6) + ' group-' + entry.groups[i].name + '">';
-		html += '<h3>' + entry.groups[i].label + '</h3>';
-		html += '<table cellpadding="0" cellspacing="0">';
+		html += '<tr class="group group-' + (i % 6) + ' group-' + entry.groups[i].name + '"><td colspan="4"><h3>' + entry.groups[i].label + '</h3></td></tr>';
 		for (j = 0; j < entry.groups[i].fields.length; j++) {
-			html += '<tr>';
+			html += '<tr class="group group-' + (i % 6) + ' group-' + entry.groups[i].name + '">';
 			html += '<td class="name">' + entry.groups[i].fields[j].machine_name + '</td>';
 			html += '<td class="multiple">' + (entry.groups[i].fields[j].multiple == 1 ? '&#8734;' : '') + '</td>';
 			html += '<td class="shared">' + (entry.groups[i].fields[j].shared == 1 ? '<a href="#" title="Shared by other types">&sect;</a>' : '') + '</td>';
 			html += '<td class="type">' + entry.groups[i].fields[j].type + '</td>';
 			html += '</tr>';
 		}
-		html += '</table></div>';
 	}
+	html += '</table>';
 	
 	html += '</div>';
 	

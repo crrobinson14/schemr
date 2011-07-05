@@ -231,8 +231,11 @@ function schemr_ajax_generate_field($machine_name, $multiple, $type, $targets) {
 	$field->machine_name = $machine_name;
 	$field->multiple = $multiple;
 	switch ($type) {
+		case 'nodereference':
+			$field->type = '&raquo; node';
+			break;
 		case 'userreference':
-			$field->type = 'ref: user';
+			$field->type = '&raquo; user';
 			break;
 		default:
 			$field->type = $type;
