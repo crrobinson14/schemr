@@ -47,11 +47,17 @@ function addCtype(entry, i) {
 }
 
 function resetLayout() {
+	$('.ctype').remove();
 	last_x = last_y = spacing;
 	row_height = 0;
 	for (var i in ctypes) {
 		addCtype(ctypes[i], i);
 	}
+
+	$('.ctype').easydrag().ondrop(function(e, element) {
+		$('header .reset').show();
+		$('header .save').show();
+	});
 }
 
 function loadLayout() {
@@ -81,33 +87,6 @@ function getCtypes() {
 	});
 }
 
-function myMove(e){
-	if (dragok){
-		x = e.pageX - canvas.offsetLeft;
-		y = e.pageY - canvas.offsetTop;
-		redrawCanvas();
-	}
-}
-
-function myDown(e){
-	if (e.pageX < x + 15 + canvas.offsetLeft &&
-		e.pageX > x - 15 + canvas.offsetLeft &&
-		e.pageY < y + 15 + canvas.offsetTop &&
-		e.pageY > y -15 + canvas.offsetTop) {
-		x = e.pageX - canvas.offsetLeft;
-		y = e.pageY - canvas.offsetTop;
-		dragok = true;
-		canvas.onmousemove = myMove;
-	}
-}
-
-function myUp(){
-	dragok = false;
-	canvas.onmousemove = null;
-	
-	$('header .reset').show();
-}
-
 $(document).ready(function() {
 	canvas = $('#canvas');
 	scrollpane = $('#scrollpane');
@@ -118,5 +97,15 @@ $(document).ready(function() {
 	getCtypes();
 	resetLayout();
 	loadLayout();
-	$('.ctype').jqDrag();
+	
+	$('header .reset').click(function() {
+		resetLayout();
+		$('header .reset').hide();
+		return false;
+	});
+
+	$('header .save').click(function() {
+		// TODO
+		return false;
+	});
 });
