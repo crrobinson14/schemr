@@ -1,15 +1,7 @@
 var canvas;
-var ctx;
-var x = 75;
-var y = 50;
-var WIDTH = 400;
-var HEIGHT = 300;
+var scrollpane;
 var dragok = false;
-
 var ctypes = [];
-
-// Our layout needs are primitive for now. We expect the user to do some re-arranging, so for now we
-// just generally
 var spacing = 15;
 var last_x = 15;
 var last_y = 15;
@@ -38,12 +30,12 @@ function addCtype(entry, i) {
 	
 	html += '</div>';
 	
-	$('#scrollpane').append(html);
+	$('#canvas').append(html);
 	
 	var width = $('#' + id).width();
 	var height = $('#' + id).height();
 	
-	if (last_x + width >= $('#scrollpane').width()) {
+	if (last_x + width >= $('#canvas').width()) {
 		last_y += row_height + spacing;
 		last_x = spacing;
 		row_height = 0;
@@ -54,45 +46,39 @@ function addCtype(entry, i) {
 	if (height > row_height) row_height = height;
 }
 
-function getCtypes() {
-	$.getJSON(base_path + 'admin/content/types/schemr/ajax', { r: 'types' }, function(data) {
-		last_x = last_y = spacing;
-		row_height = 0;
-		for (var i in data) {
-			addCtype(data[i], i);
-			console.log(data[i]);
+function resetLayout() {
+	last_x = last_y = spacing;
+	row_height = 0;
+	for (var i in ctypes) {
+		addCtype(ctypes[i], i);
+	}
+}
+
+function loadLayout() {
+	$.ajax({
+		url: base_path + 'admin/content/types/schemr/ajax',
+		dataType: 'json',
+		data: { r: 'load' },
+		async: false,
+		success: function(data) {
+			for (var i in data) {
+				var id = '#ctype-' + data[i].ctype;
+				$('#ctype-' + data[i].ctype).css({ left: data[i].x + 'px', top: data[i].y + 'px'});
+			}
 		}
 	});
 }
 
-function drawCType(x,y,w,h) {
-	ctx.beginPath();
-	ctx.rect(x,y,w,h);
-	ctx.closePath();
-	ctx.fill();
-}
-
-function rect(x,y,w,h) {
-	ctx.beginPath();
-	ctx.rect(x,y,w,h);
-	ctx.closePath();
-	ctx.fill();
-}
-
-function clear() {
-	ctx.clearRect(0, 0, WIDTH, HEIGHT);
-}
-
-function redrawCanvas() {
-	// TODO: Dynamically set the canvas size to fit all of the tables' extents
-	ctx.canvas.width  = WIDTH;
-	ctx.canvas.height = HEIGHT;
-
-	clear();
-	ctx.fillStyle = "#FAF7F8";
-	rect(0,0,WIDTH,HEIGHT);
-	ctx.fillStyle = "#444444";
-	rect(x - 15, y - 15, 30, 30);
+function getCtypes() {
+	$.ajax({
+		url: base_path + 'admin/content/types/schemr/ajax',
+		dataType: 'json',
+		data: { r: 'types' },
+		async: false,
+		success: function(data) {
+			ctypes = data;
+		}
+	});
 }
 
 function myMove(e){
@@ -118,23 +104,19 @@ function myDown(e){
 function myUp(){
 	dragok = false;
 	canvas.onmousemove = null;
+	
+	$('header .reset').show();
 }
 
 $(document).ready(function() {
-	canvas = document.getElementById("canvas");
-	ctx = canvas.getContext("2d");
+	canvas = $('#canvas');
+	scrollpane = $('#scrollpane');
 	
-	scrollpane = document.getElementById('scrollpane');
-	scrollpane.style.width = window.innerWidth + 'px';
-	scrollpane.style.height = (window.innerHeight-35) + 'px';
+	$(scrollpane).width(window.innerWidth);
+	$(scrollpane).height(window.innerHeight - 30);
 
-	WIDTH = window.innerWidth + 100;
-	HEIGHT = window.innerHeight-35 + 100; // Should be 30, but for some reason we get scrollbars until we expand a bit
-
-	getCtypes();	
-	
-	redrawCanvas();
-
-	canvas.onmousedown = myDown;
-	canvas.onmouseup = myUp;
+	getCtypes();
+	resetLayout();
+	loadLayout();
+	$('.ctype').jqDrag();
 });

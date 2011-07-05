@@ -54,7 +54,14 @@ function schemr_show_diagram() {
 
 	$site_name = variable_get('site_name', '');
 	$bp = base_path();
-	$path = $bp . drupal_get_path('module', 'schemr');
+	$mp = drupal_get_path('module', 'schemr');
+	$path = $bp . $mp;
+	
+	$pdf = '';
+	if (file_exists($mp . '/fpdf/fpdf.php')) {
+		$pdf = '<a target="_blank" href="/admin/content/types/schemr/ajax?r=pdf">PDF</a>';
+	}
+	
 	$ret[] = <<<ENDL
 <!doctype html>
 <html>
@@ -64,6 +71,7 @@ function schemr_show_diagram() {
 <link rel="stylesheet" type="text/css" href="$path/schemr.css" />
 <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>
 <script type="text/javascript" src="$path/schemr.js"></script>
+<script type="text/javascript" src="$path/jqDnR.js"></script>
 <script type="text/javascript">
 var base_path = '$bp';
 </script>
@@ -71,11 +79,11 @@ var base_path = '$bp';
 <body>
 <header>
 	Schemr Content Type Diagram for &quot;$site_name&quot;
+	$pdf
+	<a href="#" class="reset">Reset Layout</a>
 </header>
 <section>
-	<div id="scrollpane"><canvas id="canvas" width="100" height="300">
-	This text is displayed if your browser does not support HTML5 Canvas.
-	</canvas></div>
+	<div id="scrollpane"><div id="canvas"></div></div>
 </section>
 </body>
 </html>
@@ -403,11 +411,24 @@ function schemr_generate_type_tree() {
  * Supplies the canvas display with data
  */
 function schemr_ajax_callback() {
+	$path = drupal_get_path('module', 'schemr');
+	
 	switch ($_REQUEST['r']) {
 		case 'types':
-			$results = schemr_generate_type_tree();
+			print json_encode(schemr_generate_type_tree());
+			break;
+		case 'save':
+			// Sanitize the input and set up $layout
+			$r = file_put_contents($path . '/diagram.profile', $layout);
+			break;
+		case 'load':
+			$r = file_get_contents($path . '/diagram.profile');
+			print $r;
+			break;
+		case 'pdf':
+			require_once('fpdf/fpdf.php');
+			header('Content-Type: application/pdf');
 			
-			print json_encode($results);
 			break;
 	}
 	
