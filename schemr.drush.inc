@@ -55,6 +55,6 @@ function drush_schemr_diff() {
 	$format = (($unified || !$sbs) ? "-u" : "-y");
 	
 	$tmpfile = drush_save_data_to_temp_file($r);
-	drush_shell_exec("diff $format $tmpfile $path/schemr.profile");
+	drush_shell_exec("diff $format $path/schemr.profile $tmpfile");
 	drush_print(implode("\n", drush_shell_exec_output()));
 }
