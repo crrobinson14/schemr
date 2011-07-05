@@ -19,7 +19,7 @@ function addCtype(entry, i) {
 	var id = 'ctype-' + entry.type;
 	var html = '<div class="ctype" id="' + id + '" style="z-index: ' + (5+parseInt(i)) + '">';
 
-	html += '<h2>' + entry.label + '</h2>';
+	html += '<h2>' + entry.label + ' (' + entry.type + ')</h2>';
 	
 	html += '<table cellpadding="0" cellspacing="0">';
 	for (i = 0; i < entry.groups.length; i++) {
