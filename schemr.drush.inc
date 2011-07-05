@@ -15,6 +15,10 @@ function schemr_drush_command() {
 	);
 	$items['schemr-diff'] = array(
 		'description' => 'Show differences between the current schema in the database, and the last report that was produced.',
+		'options' => array(
+			'--unified' => 'Output a unified diff',
+			'--side-by-side' => 'Output a side-by-side display, suitable for parsing or comitting as its own element.',
+		),
 		'aliases' => array('schd'),
 	);
 	
@@ -34,34 +38,23 @@ function drush_schemr_update() {
 	$r = schemr_json_indent(json_encode(schemr_generate_type_tree()));
 	
 	file_put_contents($path . '/schemr.profile', $r);
-	drush_log(dt('Schema updated in ' . $path . '/schema.profile'), 'ok');
+	drush_log(dt('Schema updated in ' . $path . '/schemr.profile'), 'ok');
 }
 
 /**
  * Command handler.  Show source code of specified function or method.
  */
 function drush_schemr_diff() {
-  // Get implementations in the .install files as well.
-  include_once './includes/install.inc';
-  drupal_load_updates();
-  
-  if (strpos($function_name, '::') === FALSE) {
-    if (!function_exists($function_name)) {
-      return drush_set_error(dt('Function not found'));
-    }
-    $reflect = new ReflectionFunction($function_name);
-  }
-  else {
-    list($class, $method) = explode('::', $function_name);
-    if (!method_exists($class, $method)) {
-      return drush_set_error(dt('Method not found'));
-    }
-    $reflect = new ReflectionMethod($class, $method);
-  }
-  $func_info = array('!file' => $reflect->getFileName(), '!startline' => $reflect->getStartLine(), '!endline' => $reflect->getEndLine());
-  //drush_print_pipe(dt("!file -line !startline", $func_info));
-  drush_print_pipe($reflect->getFileName());
-  drush_print(dt("// file: !file, lines !startline-!endline", $func_info));
-
-  _drush_devel_print_function($reflect->getFileName(), $reflect->getStartLine(), $reflect->getEndLine());
+	$path = drupal_get_path('module', 'schemr');
+	
+	$_REQUEST['r'] = 'types';
+	$r = schemr_json_indent(json_encode(schemr_generate_type_tree()));
+	
+	$unified = drush_get_option('unified');
+	$sbs = drush_get_option('side-by-side');
+	$format = (($unified || !$sbs) ? "-u" : "-y");
+	
+	$tmpfile = drush_save_data_to_temp_file($r);
+	drush_shell_exec("diff $format $tmpfile $path/schemr.profile");
+	drush_print(implode("\n", drush_shell_exec_output()));
 }
