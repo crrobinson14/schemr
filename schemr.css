@@ -10,9 +10,9 @@ header { background: #00293e; color: #fff; font-weight: bold; height: 30px; line
 
 .group { padding: 3px; }
 .group-0 { background: #ddffff; }
-.group-1 { background: #ffddff; }
-.group-2 { background: #ffffdd; }
-.group-3 { background: #ffdddd; }
+.group-1 { background: #ffffdd; }
+.group-2 { background: #ffddee; }
+.group-3 { background: #ffcc66; }
 .group-4 { background: #ddddff; }
 .group-5 { background: #ddffdd; }
 .group h3 { text-decoration: underline; font-weight: bold; font-size: 12px; }

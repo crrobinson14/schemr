@@ -218,8 +218,18 @@ function schemr_admin_configure(&$form_state, $module = NULL, $delta = 0) {
  * Utility function to create field classes with the appropriate entries. We cache fields
  * so we can track whether they're shared or not.
  */
-function schemr_ajax_generate_field($machine_name, $multiple, $type, $targets) {
+function schemr_ajax_generate_field($machine_name, $multiple, $type, $ctype) {
 	static $fields = array();
+	static $fielddata = null;
+	
+	if ($fielddata == null) {
+		$fielddata = array();
+		$f = content_fields();
+		schemr_recursive_ksort($f);
+		foreach($f as $entry) {
+			$fielddata[$entry['field_name']][$entry['type_name']] = $entry;
+		}
+	}
 	
 	if (isset($fields[$machine_name])) {
 		$fields[$machine_name]->shared = 1;
@@ -232,6 +242,7 @@ function schemr_ajax_generate_field($machine_name, $multiple, $type, $targets) {
 	$field->multiple = $multiple;
 	$field->notes = '';
 	$field->type = $type;
+	$field->data = content_fields($machine_name, $ctype);
 	switch ($type) {
 		case 'nodereference':
 			// TODO: Pull the allowable target ctypes here. If there are fewer than three, show them
@@ -257,51 +268,144 @@ function schemr_ajax_generate_group($name, $label) {
 }
 
 /**
+ * Recursively keysort an array
+ */
+function schemr_recursive_ksort(&$array) {
+	if (!is_array($array)) return false;
+	
+	ksort($array);
+	foreach ($array as $key => $value) {
+		schemr_recursive_ksort($array[$key]);
+	}
+	
+	return true;
+}
+
+/**
+ * Credit to: https://gist.github.com/906036
+ *
+ * Indents a flat JSON string to make it more human-readable.
+ * Stolen from http://recursive-design.com/blog/2008/03/11/format-json-with-php/
+ * and adapted to put spaces around : characters.
+ *
+ * @param string $json The original JSON string to process.
+ *
+ * @return string Indented version of the original JSON string.
+ */
+function schemr_json_indent($json) {
+	$result      = '';
+	$pos         = 0;
+	$strLen      = strlen($json);
+	$indentStr   = '  ';
+	$newLine     = "\n";
+	$prevChar    = '';
+	$outOfQuotes = true;
+
+	for ($i=0; $i<=$strLen; $i++) {
+
+		// Grab the next character in the string.
+		$char = substr($json, $i, 1);
+
+		// Put spaces in front of :
+		if ($outOfQuotes && $char == ':' && $prevChar != ' ') {
+			$result .= ' ';
+		}
+
+		if ($outOfQuotes && $char != ' ' && $prevChar == ':') {
+			$result .= ' ';
+		}
+
+		// Are we inside a quoted string?
+		if ($char == '"' && $prevChar != '\\') {
+			$outOfQuotes = !$outOfQuotes;
+
+			// If this character is the end of an element, 
+			// output a new line and indent the next line.
+		} else if(($char == '}' || $char == ']') && $outOfQuotes) {
+			$result .= $newLine;
+			$pos --;
+			for ($j=0; $j<$pos; $j++) {
+				$result .= $indentStr;
+			}
+		}
+
+		// Add the character to the result string.
+		$result .= $char;
+
+		// If the last character was the beginning of an element, 
+		// output a new line and indent the next line.
+		if (($char == ',' || $char == '{' || $char == '[') && $outOfQuotes) {
+			$result .= $newLine;
+			if ($char == '{' || $char == '[') {
+				$pos ++;
+			}
+
+			for ($j = 0; $j < $pos; $j++) {
+				$result .= $indentStr;
+			}
+		}
+
+		$prevChar = $char;
+	}
+
+	return $result;
+}
+
+function schemr_generate_type_tree() {
+	$results = array();
+	$fields = array();
+	
+	$ctypes = content_types();
+	foreach ($ctypes as $ctype) {
+		$groups = array('base' => schemr_ajax_generate_group('base', 'Base'));
+		
+		$field_groups = array();
+		$gs = fieldgroup_groups($ctype['type'], TRUE);
+		foreach ($gs as $g) {
+			foreach ($g['fields'] as $f) {
+				$field_groups[$f['field_name']] = $g['group_name'];
+			}
+			$groups[$g['group_name']] = schemr_ajax_generate_group($g['group_name'], $g['label']);
+		}				
+		
+		$result = new stdClass();
+		$result->type = $ctype['type'];
+		$result->label = $ctype['name'];				
+		
+		if ($ctype['has_title'])
+			$groups['base']->fields['title'] = schemr_ajax_generate_field('title', 0, 'text', $ctype['type']);
+		
+		if ($ctype['has_body'])
+			$groups['base']->fields['body'] = schemr_ajax_generate_field('body', 0, 'text', $ctype['type']);				
+
+		foreach ($ctype['fields'] as $f) {
+			$name = $f['field_name'];
+			$field = schemr_ajax_generate_field($name, $f['multiple'] == 0 ? 0 : 1, $f['type'], $ctype['type']);
+			if (!isset($field_groups[$name])) {
+				$groups['base']->fields[$name] = $field;
+			} else {
+				$groups[$field_groups[$name]]->fields[$name] = $field;
+			}
+		}
+
+		foreach ($groups as $g) {
+			$g->fields = array_values($g->fields);
+		}
+		
+		$result->groups = array_values($groups);
+		$results[] = $result;
+	}
+	
+	return $results;
+}
+
+/**
  * Supplies the canvas display with data
  */
 function schemr_ajax_callback() {
 	switch ($_REQUEST['r']) {
 		case 'types':
-			$results = array();
-			$fields = array();
-			
-			$ctypes = content_types();
-			foreach ($ctypes as $ctype) {
-				$groups = array('base' => schemr_ajax_generate_group('base', 'Base'));
-				
-				$field_groups = array();
-				$gs = fieldgroup_groups($ctype['type'], TRUE);
-				foreach ($gs as $g) {
-					foreach ($g['fields'] as $f) {
-						$field_groups[$f['field_name']] = $g['group_name'];
-					}
-					$groups[$g['group_name']] = schemr_ajax_generate_group($g['group_name'], $g['label']);
-				}
-				
-				
-				$result = new stdClass();
-				$result->type = $ctype['type'];
-				$result->label = $ctype['name'];				
-				
-				if ($ctype['has_title'])
-					$groups['base']->fields[] = schemr_ajax_generate_field('title', 0, 'text');
-				
-				if ($ctype['has_body'])
-					$groups['base']->fields[] = schemr_ajax_generate_field('body', 0, 'text');				
-
-				foreach ($ctype['fields'] as $f) {
-					$name = $f['field_name'];
-					$field = schemr_ajax_generate_field($name, $f['multiple'] == 0 ? 0 : 1, $f['type']);
-					if (!isset($field_groups[$name])) {
-						$groups['base']->fields[] = $field;
-					} else {
-						$groups[$field_groups[$name]]->fields[] = $field;
-					}
-				}
-
-				$result->groups = array_values($groups);
-				$results[] = $result;
-			}
+			$results = schemr_generate_type_tree();
 			
 			print json_encode($results);
 			break;
