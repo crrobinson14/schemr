@@ -50,6 +50,7 @@ function addCtype(entry, i) {
 	
 	$('#' + id).css({left: last_x + 'px', top: last_y + 'px'});
 	last_x += width + spacing;
+	if (height > row_height) row_height = height;
 }
 
 function getCtypes() {
