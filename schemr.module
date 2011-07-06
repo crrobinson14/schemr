@@ -121,13 +121,13 @@ function schemr_admin_configure(&$form_state, $module = NULL, $delta = 0) {
  */
 function _schemr_ajax_generate_field($machine_name, $multiple, $type, $ctype) {
   static $fields = array();
-  static $fielddata = null;
+  static $fielddata = NULL;
   
-  if ($fielddata == null) {
+  if ($fielddata == NULL) {
     $fielddata = array();
     $f = content_fields();
     _schemr_recursive_ksort($f);
-    foreach($f as $entry) {
+    foreach ($f as $entry) {
       $fielddata[$entry['field_name']][$entry['type_name']] = $entry;
     }
   }
@@ -178,14 +178,14 @@ function _schemr_ajax_generate_group($name, $label) {
  * going with weight-sorting.
  */
 function _schemr_recursive_ksort(&$array) {
-  if (!is_array($array)) return false;
+  if (!is_array($array)) return FALSE;
   
   ksort($array);
   foreach ($array as $key => $value) {
     _schemr_recursive_ksort($array[$key]);
   }
   
-  return true;
+  return TRUE;
 }
 
 /**
@@ -223,7 +223,8 @@ function schemr_generate_type_tree() {
       $field = _schemr_ajax_generate_field($name, $f['multiple'] == 0 ? 0 : 1, $f['type'], $ctype['type']);
       if (!isset($field_groups[$name])) {
         $groups['base']->fields[$name] = $field;
-      } else {
+      }
+      else {
         $groups[$field_groups[$name]]->fields[$name] = $field;
       }
     }
