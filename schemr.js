@@ -1,3 +1,9 @@
+/**
+ * @file
+ * Javascript 'brains' behind the Schemr module.
+ * No user-service parts inside.
+ */
+
 var canvas;
 var scrollpane;
 var dragok = false;

@@ -1,97 +1,26 @@
 <?php
 
+/**
+ * @file
+ * Limited printable-PDF support for Schemr.
+ *
+ * This facility makes some crude approximations to generate its output. For now, the
+ * primary goal is to generate a PDF file that's a good approximation of the positioning
+ * of diagram elements as specified by the site admin and saved to the server. This
+ * generally gives better results when printed than using the browser's print function
+ * because a) colors are preserved, and b) the PDF can be produced as a single page,
+ * allowing the site admin to scale it to fit whatever their available paper size might
+ * be.
+ *
+ * The FPDF module is required to support this facility. See INSTALL.txt for details.
+ */
+
 require_once('fpdf/fpdf.php');
-
-header('Content-Type: application/pdf');
-class PDF extends FPDF
-{
-// Load data
-function LoadData($file)
-{
-    // Read file lines
-    $lines = file($file);
-    $data = array();
-    foreach($lines as $line)
-        $data[] = explode(';',trim($line));
-    return $data;
-}
-
-// Simple table
-function BasicTable($header, $data)
-{
-    // Header
-    foreach($header as $col)
-        $this->Cell(40,7,$col,1);
-    $this->Ln();
-    // Data
-    foreach($data as $row)
-    {
-        foreach($row as $col)
-            $this->Cell(40,6,$col,1);
-        $this->Ln();
-    }
-}
-
-// Better table
-function ImprovedTable($header, $data)
-{
-    // Column widths
-    $w = array(40, 35, 40, 45);
-    // Header
-    for($i=0;$i<count($header);$i++)
-        $this->Cell($w[$i],7,$header[$i],1,0,'C');
-    $this->Ln();
-    // Data
-    foreach($data as $row)
-    {
-        $this->Cell($w[0],6,$row[0],'LR');
-        $this->Cell($w[1],6,$row[1],'LR');
-        $this->Cell($w[2],6,number_format($row[2]),'LR',0,'R');
-        $this->Cell($w[3],6,number_format($row[3]),'LR',0,'R');
-        $this->Ln();
-    }
-    // Closing line
-    $this->Cell(array_sum($w),0,'','T');
-}
-
-// Colored table
-function FancyTable($header, $data)
-{
-    // Colors, line width and bold font
-    $this->SetFillColor(255,0,0);
-    $this->SetTextColor(255);
-    $this->SetDrawColor(128,0,0);
-    $this->SetLineWidth(.3);
-    $this->SetFont('','B');
-    // Header
-    $w = array(40, 35, 40, 45);
-    for($i=0;$i<count($header);$i++)
-        $this->Cell($w[$i],7,$header[$i],1,0,'C',true);
-    $this->Ln();
-    // Color and font restoration
-    $this->SetFillColor(224,235,255);
-    $this->SetTextColor(0);
-    $this->SetFont('');
-    // Data
-    $fill = false;
-    foreach($data as $row)
-    {
-        $this->Cell($w[0],6,$row[0],'LR',0,'L',$fill);
-        $this->Cell($w[1],6,$row[1],'LR',0,'L',$fill);
-        $this->Cell($w[2],6,number_format($row[2]),'LR',0,'R',$fill);
-        $this->Cell($w[3],6,number_format($row[3]),'LR',0,'R',$fill);
-        $this->Ln();
-        $fill = !$fill;
-    }
-    // Closing line
-    $this->Cell(array_sum($w),0,'','T');
-}
-}
 
 /**
  * Provides a rough extents value for each ctype box.
  */
-function schemr_ctype_extents($pdf, $ctype) {
+function _schemr_ctype_extents($pdf, $ctype) {
 	$ret = array();
 	
 	$pdf->SetFont('Arial', 'B', 12);
@@ -133,6 +62,9 @@ function schemr_ctype_extents($pdf, $ctype) {
 	return $ret;
 }
 
+/**
+ * Menu hook callback to generate a PDF display.
+ */
 function schemr_generate_pdf() {
 	// Merge up a types array
 	$t = schemr_generate_type_tree();
@@ -142,7 +74,7 @@ function schemr_generate_pdf() {
 		$ctypes[$e->type]->left = 15;
 		$ctypes[$e->type]->top = 15;
 	}
-	$diagram = json_decode(schemr_load_diagram());
+	$diagram = json_decode(_schemr_load_diagram());
 	foreach ($diagram as $d) {
 		$ctypes[$d->ctype]->left = $d->left;
 		$ctypes[$d->ctype]->top = $d->top;
@@ -151,6 +83,7 @@ function schemr_generate_pdf() {
 	$pdf = new FPDF('P', 'in');
 	$pdf->SetFont('Arial', '', 12);
 	
+	// TODO: It would be nice some day to allow the designer to set colors as config elements.
 	$gcolors = array(
 		array(221, 255, 255),
 		array(255, 255, 221),
@@ -164,7 +97,7 @@ function schemr_generate_pdf() {
 	$max_x = 0;
 	$max_y = 0;
 	foreach ($ctypes as $ctype) {
-		$ctype->extents = schemr_ctype_extents($pdf, $ctype);
+		$ctype->extents = _schemr_ctype_extents($pdf, $ctype);
 		$max_x = max($max_x, $ctype->extents['left'] + $ctype->extents['width'] + 0.5);
 		$max_y = max($max_y, $ctype->extents['top'] + $ctype->extents['height'] + 0.5);
 	}
@@ -176,7 +109,7 @@ function schemr_generate_pdf() {
 	$pdf->AddPage($max_x > $max_y ? 'L' : 'P', array($max_y+1, $max_x+1));
 
 	foreach ($ctypes as $ctype) {
-		$extents = schemr_ctype_extents($pdf, $ctype);
+		$extents = $ctype->extents;
 		$top = $extents['top'];
 		$pdf->SetFont('Arial', 'B', 12);
 		$pdf->SetFillColor(255, 177, 100);
@@ -213,18 +146,6 @@ function schemr_generate_pdf() {
 		$pdf->Line($extents['left'], $top, $extents['left'] + $extents['width'], $top);
 	}
 	
-/*
-	// Column headings
-	$header = array('Country', 'Capital', 'Area (sq km)', 'Pop. (thousands)');
-	// Data loading
-	$data = $pdf->LoadData('countries.txt');
-	$pdf->AddPage();
-	$pdf->BasicTable($header,$data);
-	$pdf->AddPage();
-	$pdf->ImprovedTable($header,$data);
-	$pdf->AddPage();
-	$pdf->FancyTable($header,$data);
-*/
 	$pdf->Output();
 	die();
 }

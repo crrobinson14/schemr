@@ -1,6 +1,9 @@
+/* Reset styles */
 html, body, header, h1, h2, h3, h4, h5, h6, label, div, span, table, a { margin: 0; padding: 0; border: none; outline: none; }
 body { font-family: Arial, sans-serif; }
 table { border-collapse: collapse; }
+
+/* General page layout */
 header { background: #00293e; color: #fff; font-weight: bold; height: 30px; line-height: 30px; padding: 0 14px; }
 #scrollpane { overflow: auto; position: relative; }
 #canvas { background: #faf7f8; }
@@ -9,10 +12,12 @@ header a { float: right; color: #b8b8b8; margin-left: 14px; }
 header a:hover { text-decoration: underline; color: #fff; }
 header a.save, header a.reset { display: none; }
 
+/* Content type-level styles */
 .ctype { position: absolute; display: block; z-index: 5; border: 2px solid #444; background: #e0e0e0; }
 .ctype h2 { display: block; background: #ffb164; padding: 3px 6px; font-size: 12px; font-weight: bold; border-bottom: 1px solid #444; }
 .ctype table { width: 100%; }
 
+/* Group-level styles */
 .group { padding: 3px; }
 .group-0 { background: #ddffff; }
 .group-1 { background: #ffffdd; }

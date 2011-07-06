@@ -1,5 +1,9 @@
 Installation is easy, simply enable the module and it will provide at least
-some basic level of functionality at admin/content/types/schemr/view.
+some basic level of functionality at admin/content/types/schemr/view. Diagram
+layout files and schema dump files are stored by default in a "schemr"
+subdirectory in your site's configured files directory. If you would like
+to change this, visit the configuration screen at
+admin/content/types/schemr/configure.
 
 If you want to take advantage of the PDF output support you need to install
 the FPDF library. To do this, visit http://www.fpdf.org/, click Downloads,

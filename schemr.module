@@ -1,7 +1,8 @@
 <?php
 
 /**
- *
+ * @file
+ * Schemr module. See README.txt for full description.
  */
 
 /**
@@ -95,17 +96,10 @@ var base_path = '$bp';
 </body>
 </html>
 ENDL;
-/*
-	$ctypes = content_types();
-	foreach ($ctypes as $ctype) {
-		$ret[] = $ctype['type'] . '<br />';
-	}
-	$ret[] = print_r($ctypes, TRUE);
-*/
+
 	print implode("\n", $ret);
 	die();
 }
-
 
 /**
  * Display the Schemr configuration form.
@@ -125,14 +119,14 @@ function schemr_admin_configure(&$form_state, $module = NULL, $delta = 0) {
  * Utility function to create field classes with the appropriate entries. We cache fields
  * so we can track whether they're shared or not.
  */
-function schemr_ajax_generate_field($machine_name, $multiple, $type, $ctype) {
+function _schemr_ajax_generate_field($machine_name, $multiple, $type, $ctype) {
 	static $fields = array();
 	static $fielddata = null;
 	
 	if ($fielddata == null) {
 		$fielddata = array();
 		$f = content_fields();
-		schemr_recursive_ksort($f);
+		_schemr_recursive_ksort($f);
 		foreach($f as $entry) {
 			$fielddata[$entry['field_name']][$entry['type_name']] = $entry;
 		}
@@ -164,7 +158,10 @@ function schemr_ajax_generate_field($machine_name, $multiple, $type, $ctype) {
 	return $fields[$machine_name];
 }
 
-function schemr_ajax_generate_group($name, $label) {
+/**
+ * Utility function to generate a group entry.
+ */
+function _schemr_ajax_generate_group($name, $label) {
 	$group = new stdClass();
 	
 	$group->name = $name;
@@ -175,96 +172,32 @@ function schemr_ajax_generate_group($name, $label) {
 }
 
 /**
- * Recursively keysort an array
+ * Utility function to recursively keysort an array.
+ *
+ * @TODO: We may not really need this. We started down this route before we settled on
+ * going with weight-sorting.
  */
-function schemr_recursive_ksort(&$array) {
+function _schemr_recursive_ksort(&$array) {
 	if (!is_array($array)) return false;
 	
 	ksort($array);
 	foreach ($array as $key => $value) {
-		schemr_recursive_ksort($array[$key]);
+		_schemr_recursive_ksort($array[$key]);
 	}
 	
 	return true;
 }
 
 /**
- * Credit to: https://gist.github.com/906036
- *
- * Indents a flat JSON string to make it more human-readable.
- * Stolen from http://recursive-design.com/blog/2008/03/11/format-json-with-php/
- * and adapted to put spaces around : characters.
- *
- * @param string $json The original JSON string to process.
- *
- * @return string Indented version of the original JSON string.
+ * Utility function to get all the types and data that we care about.
  */
-function schemr_json_indent($json) {
-	$result      = '';
-	$pos         = 0;
-	$strLen      = strlen($json);
-	$indentStr   = '  ';
-	$newLine     = "\n";
-	$prevChar    = '';
-	$outOfQuotes = true;
-
-	for ($i=0; $i<=$strLen; $i++) {
-
-		// Grab the next character in the string.
-		$char = substr($json, $i, 1);
-
-		// Put spaces in front of :
-		if ($outOfQuotes && $char == ':' && $prevChar != ' ') {
-			$result .= ' ';
-		}
-
-		if ($outOfQuotes && $char != ' ' && $prevChar == ':') {
-			$result .= ' ';
-		}
-
-		// Are we inside a quoted string?
-		if ($char == '"' && $prevChar != '\\') {
-			$outOfQuotes = !$outOfQuotes;
-
-			// If this character is the end of an element, 
-			// output a new line and indent the next line.
-		} else if(($char == '}' || $char == ']') && $outOfQuotes) {
-			$result .= $newLine;
-			$pos --;
-			for ($j=0; $j<$pos; $j++) {
-				$result .= $indentStr;
-			}
-		}
-
-		// Add the character to the result string.
-		$result .= $char;
-
-		// If the last character was the beginning of an element, 
-		// output a new line and indent the next line.
-		if (($char == ',' || $char == '{' || $char == '[') && $outOfQuotes) {
-			$result .= $newLine;
-			if ($char == '{' || $char == '[') {
-				$pos ++;
-			}
-
-			for ($j = 0; $j < $pos; $j++) {
-				$result .= $indentStr;
-			}
-		}
-
-		$prevChar = $char;
-	}
-
-	return $result;
-}
-
 function schemr_generate_type_tree() {
 	$results = array();
 	$fields = array();
 	
 	$ctypes = content_types();
 	foreach ($ctypes as $ctype) {
-		$groups = array('base' => schemr_ajax_generate_group('base', 'Base'));
+		$groups = array('base' => _schemr_ajax_generate_group('base', 'Base'));
 		
 		$field_groups = array();
 		$gs = fieldgroup_groups($ctype['type'], TRUE);
@@ -272,7 +205,7 @@ function schemr_generate_type_tree() {
 			foreach ($g['fields'] as $f) {
 				$field_groups[$f['field_name']] = $g['group_name'];
 			}
-			$groups[$g['group_name']] = schemr_ajax_generate_group($g['group_name'], $g['label']);
+			$groups[$g['group_name']] = _schemr_ajax_generate_group($g['group_name'], $g['label']);
 		}				
 		
 		$result = new stdClass();
@@ -280,14 +213,14 @@ function schemr_generate_type_tree() {
 		$result->label = $ctype['name'];				
 		
 		if ($ctype['has_title'])
-			$groups['base']->fields['title'] = schemr_ajax_generate_field('title', 0, 'text', $ctype['type']);
+			$groups['base']->fields['title'] = _schemr_ajax_generate_field('title', 0, 'text', $ctype['type']);
 		
 		if ($ctype['has_body'])
-			$groups['base']->fields['body'] = schemr_ajax_generate_field('body', 0, 'text', $ctype['type']);				
+			$groups['base']->fields['body'] = _schemr_ajax_generate_field('body', 0, 'text', $ctype['type']);				
 
 		foreach ($ctype['fields'] as $f) {
 			$name = $f['field_name'];
-			$field = schemr_ajax_generate_field($name, $f['multiple'] == 0 ? 0 : 1, $f['type'], $ctype['type']);
+			$field = _schemr_ajax_generate_field($name, $f['multiple'] == 0 ? 0 : 1, $f['type'], $ctype['type']);
 			if (!isset($field_groups[$name])) {
 				$groups['base']->fields[$name] = $field;
 			} else {
@@ -306,7 +239,10 @@ function schemr_generate_type_tree() {
 	return $results;
 }
 
-function schemr_load_diagram() {
+/**
+ * Utility function to load a diagram file.
+ */
+function _schemr_load_diagram() {
 	$path = schemr_get_data_path();
 	$r = file_get_contents($path . '/diagram.profile');
 
@@ -348,13 +284,17 @@ function schemr_ajax_callback() {
 			break;
 		
 		case 'load':
-			print schemr_load_diagram();
+			print _schemr_load_diagram();
 			break;
 	}
 	
 	die();
 }
 
+/**
+ * Utility function to obtain Schemr's data path. Logs a watchdog entry if the path
+ * does not exist and we're unable to create it.
+ */
 function schemr_get_data_path() {
 	$path = variable_get('schemr_directory', file_directory_path() . '/schemr');
 	

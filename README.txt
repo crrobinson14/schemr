@@ -63,3 +63,32 @@ each box. You may then drag/drop the titles of the various types to sort or
 reposition them, and save the new layout to the server. The layout will be
 automatically reloaded each time you access the diagram in the future. Note
 that support for multiple diagrams is planned, but not yet available.
+
+Diagram layouts may be adjusted by simply dragging and dropping elements on
+the canvas. This facility is crude at the moment - there are no alignment/
+ordering facilities, grid snapping, etc. Its main purpose is to allow you to
+shuffle the order in which elements are presented to conceptually group
+related items.
+
+Once arranged, a layout may be saved back to the server with the Save button,
+or reset to a reasonably-spaced alphabetically-sorted arrangement with the
+Reset button. After saving, future loads of the same diagram will honor the
+saved layout.
+
+At this time, Schemr supports only a single layout shared by all users.
+Support for multiple diagrams is planned for the future, but was out of
+scope for this release.
+
+A PDF file may also be produced from a diagram. This is not necessarily an
+identical reproduction but it should be fairly close. The PDF is produced
+as a single page of all elements, which you can then tile, scale, or
+adjust to the best paper size you have available, or simply refer to as
+an electronic file.
+
+Diagrams are themeable - class tags are output for content type and group
+elements, so colors, fonts, and other aspects may be customized. However,
+note that these are currently not (and may never be) synchronized to the
+PDF output facility, as we wanted to standardize on an easily-installed
+PDF library with minimal prerequisites (FPDF). We would need sophisticated
+HTML parsing to calculate styles and extents for a true reproduction, and
+that was beyond the scope of this project. Feel free to contribute!
