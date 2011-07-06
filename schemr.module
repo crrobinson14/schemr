@@ -9,67 +9,67 @@
  * Implementation of hook_menu().
  */
 function schemr_menu() {
-	$items = array();
+  $items = array();
 
-	$items['admin/content/types/schemr'] = array(
-		'title' => 'Schemr',
-		'page callback' => 'schemr_show_diagram',
-		'access arguments' => array('administer content types'),
-		'type' => MENU_LOCAL_TASK,
-	);
-	
-	$items['admin/content/types/schemr/view'] = array(
-		'title' => 'View Schema Diagram',
-		'page callback' => 'schemr_show_diagram',
-		'access arguments' => array('administer content types'),
-		'type' => MENU_LOCAL_TASK,
-		'weight' => -50,
-	);
-	
-	$items['admin/content/types/schemr/configure'] = array(
-		'title' => 'Configure Schemr',
-		'page callback' => 'drupal_get_form',
-		'page arguments' => array('schemr_admin_configure'),
-		'access arguments' => array('administer content types'),
-		'type' => MENU_LOCAL_TASK,
-		'weight' => -49,
-	);
-	
-	$items['admin/content/types/schemr/ajax'] = array(
-		'page callback' => 'schemr_ajax_callback',
-		'access arguments' => array('administer content types'),
-		'type' => MENU_CALLBACK,
-	);
-	
-	$items['admin/content/types/schemr/pdf'] = array(
-		'page callback' => 'schemr_generate_pdf',
-		'access arguments' => array('administer content types'),
-	    'file' => 'schemr.pdf.inc',
-		'type' => MENU_CALLBACK,
-	);
-	
-	return $items;	
+  $items['admin/content/types/schemr'] = array(
+    'title' => 'Schemr',
+    'page callback' => 'schemr_show_diagram',
+    'access arguments' => array('administer content types'),
+    'type' => MENU_LOCAL_TASK,
+  );
+  
+  $items['admin/content/types/schemr/view'] = array(
+    'title' => 'View Schema Diagram',
+    'page callback' => 'schemr_show_diagram',
+    'access arguments' => array('administer content types'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => -50,
+  );
+  
+  $items['admin/content/types/schemr/configure'] = array(
+    'title' => 'Configure Schemr',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('schemr_admin_configure'),
+    'access arguments' => array('administer content types'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => -49,
+  );
+  
+  $items['admin/content/types/schemr/ajax'] = array(
+    'page callback' => 'schemr_ajax_callback',
+    'access arguments' => array('administer content types'),
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['admin/content/types/schemr/pdf'] = array(
+    'page callback' => 'schemr_generate_pdf',
+    'access arguments' => array('administer content types'),
+      'file' => 'schemr.pdf.inc',
+    'type' => MENU_CALLBACK,
+  );
+  
+  return $items;  
 }
 
 /**
  * Display a Schemr diagram
  */
 function schemr_show_diagram() {
-	$ret = array();
-	
-	if (!function_exists('content_types') || !function_exists('content_fields'))
-		return "This module is not useful until you install CCK.";
+  $ret = array();
+  
+  if (!function_exists('content_types') || !function_exists('content_fields'))
+    return "This module is not useful until you install CCK.";
 
-	$site_name = variable_get('site_name', '');
-	$bp = base_path();
-	$mp = drupal_get_path('module', 'schemr');
-	$path = $bp . $mp;
-	
-	$pdf = '';
-	if (file_exists($mp . '/fpdf/fpdf.php')) 
-		$pdf = '<a target="_blank" href="' . $bp . 'admin/content/types/schemr/pdf">PDF</a>';
-	
-	$ret[] = <<<ENDL
+  $site_name = variable_get('site_name', '');
+  $bp = base_path();
+  $mp = drupal_get_path('module', 'schemr');
+  $path = $bp . $mp;
+  
+  $pdf = '';
+  if (file_exists($mp . '/fpdf/fpdf.php')) 
+    $pdf = '<a target="_blank" href="' . $bp . 'admin/content/types/schemr/pdf">PDF</a>';
+  
+  $ret[] = <<<ENDL
 <!doctype html>
 <html>
 <head>
@@ -85,34 +85,34 @@ var base_path = '$bp';
 </head>
 <body>
 <header>
-	Schemr Content Type Diagram for &quot;$site_name&quot;
-	$pdf
-	<a href="#" class="reset">Reset Layout</a>
-	<a href="#" class="save">Save Layout</a>
+  Schemr Content Type Diagram for &quot;$site_name&quot;
+  $pdf
+  <a href="#" class="reset">Reset Layout</a>
+  <a href="#" class="save">Save Layout</a>
 </header>
 <section>
-	<div id="scrollpane"><div id="canvas"></div></div>
+  <div id="scrollpane"><div id="canvas"></div></div>
 </section>
 </body>
 </html>
 ENDL;
 
-	print implode("\n", $ret);
-	die();
+  print implode("\n", $ret);
+  die();
 }
 
 /**
  * Display the Schemr configuration form.
  */
 function schemr_admin_configure(&$form_state, $module = NULL, $delta = 0) {
-	$form['schemr_directory'] = array(
-		'#type' => 'textfield',
-		'#description' => t('Path in which Schemr will store its data files. This defaults to your files directory, but you should change this if you exclude that directory from being tracked by your revision control system.'),
-		'#title' => t('Schemr Data Path'),
-		'#default_value' => variable_get('schemr_directory', file_directory_path() . '/schemr'),
-	);
-	
-	return system_settings_form($form);
+  $form['schemr_directory'] = array(
+    '#type' => 'textfield',
+    '#description' => t('Path in which Schemr will store its data files. This defaults to your files directory, but you should change this if you exclude that directory from being tracked by your revision control system.'),
+    '#title' => t('Schemr Data Path'),
+    '#default_value' => variable_get('schemr_directory', file_directory_path() . '/schemr'),
+  );
+  
+  return system_settings_form($form);
 }
 
 /**
@@ -120,55 +120,55 @@ function schemr_admin_configure(&$form_state, $module = NULL, $delta = 0) {
  * so we can track whether they're shared or not.
  */
 function _schemr_ajax_generate_field($machine_name, $multiple, $type, $ctype) {
-	static $fields = array();
-	static $fielddata = null;
-	
-	if ($fielddata == null) {
-		$fielddata = array();
-		$f = content_fields();
-		_schemr_recursive_ksort($f);
-		foreach($f as $entry) {
-			$fielddata[$entry['field_name']][$entry['type_name']] = $entry;
-		}
-	}
-	
-	if (isset($fields[$machine_name])) {
-		$fields[$machine_name]->shared = 1;
-		return $fields[$machine_name];
-	}
-	
-	$field = new stdClass();
-	
-	$field->machine_name = $machine_name;
-	$field->multiple = $multiple;
-	$field->notes = '';
-	$field->type = $type;
-	$field->data = content_fields($machine_name, $ctype);
-	switch ($type) {
-		case 'nodereference':
-			// TODO: Pull the allowable target ctypes here. If there are fewer than three, show them
-			// If there are >=3, show "many"
-			$field->notes = 'TODO';
-			break;
-	}
-	$field->shared = 0;
-	
-	$fields[$machine_name] = $field;
-	
-	return $fields[$machine_name];
+  static $fields = array();
+  static $fielddata = null;
+  
+  if ($fielddata == null) {
+    $fielddata = array();
+    $f = content_fields();
+    _schemr_recursive_ksort($f);
+    foreach($f as $entry) {
+      $fielddata[$entry['field_name']][$entry['type_name']] = $entry;
+    }
+  }
+  
+  if (isset($fields[$machine_name])) {
+    $fields[$machine_name]->shared = 1;
+    return $fields[$machine_name];
+  }
+  
+  $field = new stdClass();
+  
+  $field->machine_name = $machine_name;
+  $field->multiple = $multiple;
+  $field->notes = '';
+  $field->type = $type;
+  $field->data = content_fields($machine_name, $ctype);
+  switch ($type) {
+    case 'nodereference':
+      // TODO: Pull the allowable target ctypes here. If there are fewer than three, show them
+      // If there are >=3, show "many"
+      $field->notes = 'TODO';
+      break;
+  }
+  $field->shared = 0;
+  
+  $fields[$machine_name] = $field;
+  
+  return $fields[$machine_name];
 }
 
 /**
  * Utility function to generate a group entry.
  */
 function _schemr_ajax_generate_group($name, $label) {
-	$group = new stdClass();
-	
-	$group->name = $name;
-	$group->label = $label;
-	$group->fields = array();
-	
-	return $group;
+  $group = new stdClass();
+  
+  $group->name = $name;
+  $group->label = $label;
+  $group->fields = array();
+  
+  return $group;
 }
 
 /**
@@ -178,117 +178,117 @@ function _schemr_ajax_generate_group($name, $label) {
  * going with weight-sorting.
  */
 function _schemr_recursive_ksort(&$array) {
-	if (!is_array($array)) return false;
-	
-	ksort($array);
-	foreach ($array as $key => $value) {
-		_schemr_recursive_ksort($array[$key]);
-	}
-	
-	return true;
+  if (!is_array($array)) return false;
+  
+  ksort($array);
+  foreach ($array as $key => $value) {
+    _schemr_recursive_ksort($array[$key]);
+  }
+  
+  return true;
 }
 
 /**
  * Utility function to get all the types and data that we care about.
  */
 function schemr_generate_type_tree() {
-	$results = array();
-	$fields = array();
-	
-	$ctypes = content_types();
-	foreach ($ctypes as $ctype) {
-		$groups = array('base' => _schemr_ajax_generate_group('base', 'Base'));
-		
-		$field_groups = array();
-		$gs = fieldgroup_groups($ctype['type'], TRUE);
-		foreach ($gs as $g) {
-			foreach ($g['fields'] as $f) {
-				$field_groups[$f['field_name']] = $g['group_name'];
-			}
-			$groups[$g['group_name']] = _schemr_ajax_generate_group($g['group_name'], $g['label']);
-		}				
-		
-		$result = new stdClass();
-		$result->type = $ctype['type'];
-		$result->label = $ctype['name'];				
-		
-		if ($ctype['has_title'])
-			$groups['base']->fields['title'] = _schemr_ajax_generate_field('title', 0, 'text', $ctype['type']);
-		
-		if ($ctype['has_body'])
-			$groups['base']->fields['body'] = _schemr_ajax_generate_field('body', 0, 'text', $ctype['type']);				
+  $results = array();
+  $fields = array();
+  
+  $ctypes = content_types();
+  foreach ($ctypes as $ctype) {
+    $groups = array('base' => _schemr_ajax_generate_group('base', 'Base'));
+    
+    $field_groups = array();
+    $gs = fieldgroup_groups($ctype['type'], TRUE);
+    foreach ($gs as $g) {
+      foreach ($g['fields'] as $f) {
+        $field_groups[$f['field_name']] = $g['group_name'];
+      }
+      $groups[$g['group_name']] = _schemr_ajax_generate_group($g['group_name'], $g['label']);
+    }        
+    
+    $result = new stdClass();
+    $result->type = $ctype['type'];
+    $result->label = $ctype['name'];        
+    
+    if ($ctype['has_title'])
+      $groups['base']->fields['title'] = _schemr_ajax_generate_field('title', 0, 'text', $ctype['type']);
+    
+    if ($ctype['has_body'])
+      $groups['base']->fields['body'] = _schemr_ajax_generate_field('body', 0, 'text', $ctype['type']);        
 
-		foreach ($ctype['fields'] as $f) {
-			$name = $f['field_name'];
-			$field = _schemr_ajax_generate_field($name, $f['multiple'] == 0 ? 0 : 1, $f['type'], $ctype['type']);
-			if (!isset($field_groups[$name])) {
-				$groups['base']->fields[$name] = $field;
-			} else {
-				$groups[$field_groups[$name]]->fields[$name] = $field;
-			}
-		}
+    foreach ($ctype['fields'] as $f) {
+      $name = $f['field_name'];
+      $field = _schemr_ajax_generate_field($name, $f['multiple'] == 0 ? 0 : 1, $f['type'], $ctype['type']);
+      if (!isset($field_groups[$name])) {
+        $groups['base']->fields[$name] = $field;
+      } else {
+        $groups[$field_groups[$name]]->fields[$name] = $field;
+      }
+    }
 
-		foreach ($groups as $g) {
-			$g->fields = array_values($g->fields);
-		}
-		
-		$result->groups = array_values($groups);
-		$results[] = $result;
-	}
-	
-	return $results;
+    foreach ($groups as $g) {
+      $g->fields = array_values($g->fields);
+    }
+    
+    $result->groups = array_values($groups);
+    $results[] = $result;
+  }
+  
+  return $results;
 }
 
 /**
  * Utility function to load a diagram file.
  */
 function _schemr_load_diagram() {
-	$path = schemr_get_data_path();
-	$r = file_get_contents($path . '/diagram.profile');
+  $path = schemr_get_data_path();
+  $r = file_get_contents($path . '/diagram.profile');
 
-	return $r;
+  return $r;
 }
 
 /**
  * Supplies the canvas display with data
  */
 function schemr_ajax_callback() {
-	$path = schemr_get_data_path();
-	
-	switch ($_REQUEST['r']) {
-		case 'types':
-			print json_encode(schemr_generate_type_tree());
-			break;
+  $path = schemr_get_data_path();
+  
+  switch ($_REQUEST['r']) {
+    case 'types':
+      print json_encode(schemr_generate_type_tree());
+      break;
 
-		case 'save':
-			// Sanitize our inputs. We do have some level of trust for this user because they
-			// have the "administer content types" privilege, so some of this is also about
-			// normalizing data to deal with potential bugs.
-			$ctypes = content_types();
-			$savedata = array();
-			$data = $_REQUEST['d'];
-			if (!is_array($data)) die("Invalid Request");
-			foreach ($data as $entry) {
-				$name = $entry['ctype'];
-				if (!isset($ctypes[$name])) continue;
+    case 'save':
+      // Sanitize our inputs. We do have some level of trust for this user because they
+      // have the "administer content types" privilege, so some of this is also about
+      // normalizing data to deal with potential bugs.
+      $ctypes = content_types();
+      $savedata = array();
+      $data = $_REQUEST['d'];
+      if (!is_array($data)) die("Invalid Request");
+      foreach ($data as $entry) {
+        $name = $entry['ctype'];
+        if (!isset($ctypes[$name])) continue;
 
-				$sd = new stdClass();
-				$sd->ctype = $name;
-				$sd->left = min(max(intval($entry['left']), 0), 99999);
-				$sd->top = min(max(intval($entry['top']), 0), 99999);
-				$savedata[] = $sd;
-			}
-			
-			$r = file_put_contents($path . '/diagram.profile', json_encode($savedata));
-			print "OK";
-			break;
-		
-		case 'load':
-			print _schemr_load_diagram();
-			break;
-	}
-	
-	die();
+        $sd = new stdClass();
+        $sd->ctype = $name;
+        $sd->left = min(max(intval($entry['left']), 0), 99999);
+        $sd->top = min(max(intval($entry['top']), 0), 99999);
+        $savedata[] = $sd;
+      }
+      
+      $r = file_put_contents($path . '/diagram.profile', json_encode($savedata));
+      print "OK";
+      break;
+    
+    case 'load':
+      print _schemr_load_diagram();
+      break;
+  }
+  
+  die();
 }
 
 /**
@@ -296,12 +296,12 @@ function schemr_ajax_callback() {
  * does not exist and we're unable to create it.
  */
 function schemr_get_data_path() {
-	$path = variable_get('schemr_directory', file_directory_path() . '/schemr');
-	
-	if (!is_dir($path)) @mkdir($path);
-	if (!is_dir($path)) {
-		watchdog('schemr', 'Unable to create Schemr data directory: ' . $path, WATCHDOG_ERROR);
-	}
-	
-	return $path;
+  $path = variable_get('schemr_directory', file_directory_path() . '/schemr');
+  
+  if (!is_dir($path)) @mkdir($path);
+  if (!is_dir($path)) {
+    watchdog('schemr', 'Unable to create Schemr data directory: ' . $path, WATCHDOG_ERROR);
+  }
+  
+  return $path;
 }
