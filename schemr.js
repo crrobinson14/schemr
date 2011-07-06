@@ -8,30 +8,16 @@
  * Drag-drop handling.
  */
 (function($){
-
-  // to track if the mouse button is pressed
-  var isMouseDown    = false;
-
-  // to track the current element being dragged
+  var isMouseDown = false;
   var currentElement = null;
-
-  // callback holders
   var dropCallbacks = {};
-  var dragCallbacks = {};
-  
-  // global position records
   var lastMouseX;
   var lastMouseY;
   var lastElemTop;
   var lastElemLeft;
-  
-  // track element dragStatus
-  var dragStatus = {};    
-
-  // if user is holding any handle or not
   var holdingHandler = false;
 
-  // returns the mouse (cursor) current position
+  // Get the current mouse position in a cross-browser-compatible way.
   $.getMousePosition = function(e){
       var posx = 0;
       var posy = 0;
@@ -50,35 +36,29 @@
       return { 'x': posx, 'y': posy };
   };
 
-  // updates the position of the current element being dragged
+  // Set the position of the dragged element.
   $.updatePosition = function(e) {
       var pos = $.getMousePosition(e);
-
       var spanX = (pos.x - lastMouseX);
       var spanY = (pos.y - lastMouseY);
 
-      $(currentElement).css("top",  (lastElemTop + spanY));
-      $(currentElement).css("left", (lastElemLeft + spanX));
+      $(currentElement).css({
+		top: (lastElemTop + spanY),
+		left: (lastElemLeft + spanX)
+	  });
   };
 
-  // when the mouse is moved while the mouse button is pressed
   $(document).mousemove(function(e){
-      if(isMouseDown && dragStatus[currentElement.id] != 'false'){
-          // update the position and call the registered function
+      if (isMouseDown) {
           $.updatePosition(e);
-          if(dragCallbacks[currentElement.id] != undefined){
-              dragCallbacks[currentElement.id](e, currentElement);
-          }
-
           return false;
       }
   });
 
-  // when the mouse button is released
   $(document).mouseup(function(e){
-      if(isMouseDown && dragStatus[currentElement.id] != 'false'){
+      if (isMouseDown) {
           isMouseDown = false;
-          if(dropCallbacks[currentElement.id] != undefined){
+          if (dropCallbacks[currentElement.id] != undefined) {
               dropCallbacks[currentElement.id](e, currentElement);
           }
 
@@ -86,60 +66,13 @@
       }
   });
 
-  // register the function to be called while an element is being dragged
-  $.fn.ondrag = function(callback){
-      return this.each(function(){
-          dragCallbacks[this.id] = callback;
-      });
-  };
-
-  // register the function to be called when an element is dropped
-  $.fn.ondrop = function(callback){
-      return this.each(function(){
-          dropCallbacks[this.id] = callback;
-      });
-  };
-  
-  // disable the dragging feature for the element
-  $.fn.dragOff = function(){
-      return this.each(function(){
-          dragStatus[this.id] = 'off';
-      });
-  };
-  
-  // enable the dragging feature for the element
-  $.fn.dragOn = function(){
-      return this.each(function(){
-          dragStatus[this.id] = 'on';
-      });
-  };
-  
-  $.fn.dragdroppable = function() {
+  $.fn.dragdroppable = function(callback) {
       return this.each(function() {
-          // set dragStatus 
-          dragStatus[this.id] = "on";
-          
-          // change the mouse pointer
-          $(this).css("cursor", "move");
-
-          // when an element receives a mouse press
-          $(this).mousedown(function(e){
-              
-              // just when "on" or "handler"
-              if((dragStatus[this.id] == "off") || (dragStatus[this.id] == "handler" && !holdingHandler))
-                  return false;
-
-              // set it as absolute positioned
-              $(this).css("position", "absolute");
-
-              // set z-index
-              $(this).css("z-index", parseInt( new Date().getTime()/1000 ));
-
-              // update track variables
+          dropCallbacks[this.id] = callback;
+          $(this).mousedown(function(e) {
               isMouseDown    = true;
               currentElement = this;
 
-              // retrieve positioning properties
               var pos    = $.getMousePosition(e);
               lastMouseX = pos.x;
               lastMouseY = pos.y;
@@ -211,7 +144,7 @@ function resetLayout() {
     addCtype(ctypes[i], i);
   }
 
-  $('.ctype').dragdroppable().ondrop(function(e, element) {
+  $('.ctype').dragdroppable(function(e, element) {
     $('header .save').show();
   });
 }
