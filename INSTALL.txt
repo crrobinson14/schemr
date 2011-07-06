@@ -1,11 +1,11 @@
 Installation is easy, simply enable the module and it will provide at least
-some basic level of functionality.
+some basic level of functionality at admin/content/types/schemr/view.
 
-If you want to take advantage of the PDF output support (see Diagrams below),
-you need to install the FPDF library. To do this, visit http://www.fpdf.org/,
-click Downloads, and download the latest ZIP or TGZ file to your server.
-Unpack it into schemr/fpdf. If you do this properly, you should have a
-schemr/fpdf/fpdf.php file on your server, and the PDF option will automatically
-appear in the top-right of the diagram screen.
+If you want to take advantage of the PDF output support you need to install
+the FPDF library. To do this, visit http://www.fpdf.org/, click Downloads,
+and download the latest ZIP or TGZ file to your server (current 1.7). Unpack
+it into schemr/fpdf. If you do this properly, you should have a
+schemr/fpdf/fpdf.php file on your server, and the PDF option will
+automatically appear in the top-right of the diagram screen.
 
-
+See README.txt for usage instructions.

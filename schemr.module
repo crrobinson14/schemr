@@ -40,6 +40,13 @@ function schemr_menu() {
 		'type' => MENU_CALLBACK,
 	);
 	
+	$items['admin/content/types/schemr/pdf'] = array(
+		'page callback' => 'schemr_generate_pdf',
+		'access arguments' => array('administer content types'),
+	    'file' => 'schemr.pdf.inc',
+		'type' => MENU_CALLBACK,
+	);
+	
 	return $items;	
 }
 
@@ -58,9 +65,8 @@ function schemr_show_diagram() {
 	$path = $bp . $mp;
 	
 	$pdf = '';
-	if (file_exists($mp . '/fpdf/fpdf.php')) {
-		$pdf = '<a target="_blank" href="/admin/content/types/schemr/ajax?r=pdf">PDF</a>';
-	}
+	if (file_exists($mp . '/fpdf/fpdf.php')) 
+		$pdf = '<a target="_blank" href="' . $bp . 'admin/content/types/schemr/pdf">PDF</a>';
 	
 	$ret[] = <<<ENDL
 <!doctype html>
@@ -300,6 +306,13 @@ function schemr_generate_type_tree() {
 	return $results;
 }
 
+function schemr_load_diagram() {
+	$path = schemr_get_data_path();
+	$r = file_get_contents($path . '/diagram.profile');
+
+	return $r;
+}
+
 /**
  * Supplies the canvas display with data
  */
@@ -335,14 +348,7 @@ function schemr_ajax_callback() {
 			break;
 		
 		case 'load':
-			$r = file_get_contents($path . '/diagram.profile');
-			print $r;
-			break;
-		
-		case 'pdf':
-			require_once('fpdf/fpdf.php');
-			header('Content-Type: application/pdf');
-			
+			print schemr_load_diagram();
 			break;
 	}
 	

@@ -55,7 +55,6 @@ function resetLayout() {
 	}
 
 	$('.ctype').easydrag().ondrop(function(e, element) {
-		$('header .reset').show();
 		$('header .save').show();
 	});
 }
@@ -71,6 +70,7 @@ function loadLayout() {
 				var id = '#ctype-' + data[i].ctype;
 				$('#ctype-' + data[i].ctype).css({ left: data[i].left + 'px', top: data[i].top + 'px'});
 			}
+			$('header .reset').show();
 		}
 	});
 }
@@ -101,6 +101,7 @@ $(document).ready(function() {
 	$('header .reset').click(function() {
 		resetLayout();
 		$('header .reset').hide();
+		$('header .save').show();
 		return false;
 	});
 
