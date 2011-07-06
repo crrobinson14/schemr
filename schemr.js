@@ -69,7 +69,7 @@ function loadLayout() {
 		success: function(data) {
 			for (var i in data) {
 				var id = '#ctype-' + data[i].ctype;
-				$('#ctype-' + data[i].ctype).css({ left: data[i].x + 'px', top: data[i].y + 'px'});
+				$('#ctype-' + data[i].ctype).css({ left: data[i].left + 'px', top: data[i].top + 'px'});
 			}
 		}
 	});
@@ -105,7 +105,22 @@ $(document).ready(function() {
 	});
 
 	$('header .save').click(function() {
-		// TODO
+		var positions = [];
+		$('.ctype').each(function(index, el) {
+			positions.push({
+				ctype: $(el).attr('id').replace('ctype-', ''),
+				left: parseInt($(el).css('left')),
+				top: parseInt($(el).css('top'))
+			});
+		});
+		$.get(base_path + 'admin/content/types/schemr/ajax', { r: 'save', d: positions }, function(data) {
+			if (data == "OK") {
+				alert("Layout saved to server.");
+				$('header .save').hide();
+			} else {
+				alert("Error while saving: " + data + "\nHas your session expired?");
+			}
+		});
 		return false;
 	});
 });

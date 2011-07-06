@@ -10,13 +10,20 @@ Drush Commands
 --------------
 To generate a schema file, run "drush schu". This will update:
 	
-	INSTALL_PATH/schemr.profile
+	SCHEMR_DATA_PATH/schemr.profile
 
-This is currently a hard-coded path because we're taking advantage of Drupal's
-default security filter to block *.profile files from public access. It will be
-configurable in a future release.) You may then commit this file to your
-version-control repository, and keep it up to date with additional "drush schu"
-commands in the future.
+SCHEMR_DATA_PATH defaults to sites/default/files/schemr (or your system's
+files path), and is configurable at admin/content/types/schemr/configure. You
+should change this path if you have configured your revision-control system
+to ignore your site's files directory (as you generally should).
+
+Note that all Schemr files end in .profile. This takes advantage of Drupal's
+current .htaccess security configuration which blocks these files from being
+accessed by the general public. You should maintain this block if you modify
+the .htaccess file.
+
+Once created, you may commit this file to your version-control repository,
+then keep it up to date in the future by re-running "drush schu".
 
 You can also check the differences between your database schema and this file
 by running "drush schd". This will produce a diff output highlighting the
@@ -53,5 +60,6 @@ these are available at "http://YOURSITE/admin/content/types/schemr".
 When you first access the diagram, items will be placed at positions determined
 by a simple alphabetical ordering by machine name, with 15px spacing between
 each box. You may then drag/drop the titles of the various types to sort or
-reposition them.
-
+reposition them, and save the new layout to the server. The layout will be
+automatically reloaded each time you access the diagram in the future. Note
+that support for multiple diagrams is planned, but not yet available.

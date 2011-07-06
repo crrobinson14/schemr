@@ -32,7 +32,7 @@ function schemr_drush_command() {
  * know Drupal's .htaccess will protect from having the outside world download via a browser.
  */
 function drush_schemr_update() {
-	$path = drupal_get_path('module', 'schemr');
+	$path = schemr_get_data_path();
 	
 	$_REQUEST['r'] = 'types';
 	$r = schemr_json_indent(json_encode(schemr_generate_type_tree()));
