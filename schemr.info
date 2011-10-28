@@ -1,5 +1,4 @@
 name = Schemr
-version = 6.x-1.0
 dependencies[] = content
 core = 6.x
 package = Development

@@ -15,7 +15,7 @@
  * The FPDF module is required to support this facility. See INSTALL.txt for details.
  */
 
-require_once('fpdf/fpdf.php');
+require_once(_schemr_find_fpdf() . '/fpdf.php');
 
 /**
  * Provides a rough extents value for each ctype box.

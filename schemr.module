@@ -57,16 +57,14 @@ function schemr_menu() {
 function schemr_show_diagram() {
   $ret = array();
   
-  if (!function_exists('content_types') || !function_exists('content_fields'))
-    return "This module is not useful until you install CCK.";
-
   $site_name = variable_get('site_name', '');
   $bp = base_path();
   $mp = drupal_get_path('module', 'schemr');
   $path = $bp . $mp;
   
   $pdf = '';
-  if (file_exists($mp . '/fpdf/fpdf.php')) 
+  $fpdf = _schemr_find_fpdf();
+  if ($fpdf)
     $pdf = '<a target="_blank" href="' . $bp . 'admin/content/types/schemr/pdf">PDF</a>';
   
   $ret[] = <<<ENDL
@@ -304,4 +302,18 @@ function schemr_get_data_path() {
   }
   
   return $path;
+}
+
+/**
+ * Search for fPDF in sites/all/libraries and sites/<domain>/libraries
+ */
+function _schemr_find_fpdf() {
+  $path = 'sites/all/libraries/fpdf';
+  if (file_exists($path . '/fpdf.php')) return $path;
+
+  $config = conf_path();
+  $path = $config . '/libraries/fpdf';
+  if (file_exists($path . '/fpdf.php')) return $path;
+
+  return FALSE;
 }
